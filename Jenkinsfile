@@ -46,30 +46,31 @@ pipeline {
         '''
 
         script {
-    String shortCommit = sh(
-        script: 'git rev-parse --short HEAD',
-        returnStdout: true
-    ).trim()
-
     String commitMessage = sh(
         script: 'git log -1 --pretty="%s"',
         returnStdout: true
     ).trim()
 
-    String commitAuthor = sh(
-        script: 'git log -1 --pretty="%an"',
-        returnStdout: true
-    ).trim()
+    // Gom khoảng trắng và xuống dòng thành một khoảng trắng
+    String normalizedMessage = commitMessage
+        .replaceAll(/\s+/, ' ')
+        .trim()
 
-    String shortMessage = commitMessage
-        .replaceAll(/[\\r\\n]+/, ' ')
-        .take(60)
+    // Cắt tối đa 36 ký tự, ưu tiên cắt tại khoảng trắng
+    String displayMessage = normalizedMessage
+
+    if (displayMessage.length() > 36) {
+        displayMessage = displayMessage
+            .substring(0, 36)
+            .replaceFirst(/\s+\S*$/, '')
+            .trim() + '...'
+    }
 
     currentBuild.displayName =
-        "#${env.BUILD_NUMBER} - ${shortCommit} - ${shortMessage}"
+        "#${env.BUILD_NUMBER} | ${displayMessage}"
 
-    currentBuild.description =
-        "${commitAuthor}: ${commitMessage}".take(120)
+    // Không hiện thêm dòng bên dưới card
+    currentBuild.description = null
 }
     }
 }
