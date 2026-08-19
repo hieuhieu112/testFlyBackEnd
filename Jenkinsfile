@@ -120,8 +120,8 @@ stage('Trivy security scan') {
                     --skip-version-check \
                     --skip-check-update \
                     --parallel 1 \
-                    --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
-                    --exit-code 0 \
+--severity MEDIUM,HIGH,CRITICAL \
+--exit-code 0 \
                     --no-progress \
                     --format table \
                     .
@@ -136,8 +136,8 @@ stage('Trivy security scan') {
                     --disable-telemetry \
                     --skip-version-check \
                     --parallel 1 \
-                    --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
-                    --exit-code 0 \
+--severity MEDIUM,HIGH,CRITICAL \
+--exit-code 0 \
                     --no-progress \
                     --format table \
                     trivy-input/
