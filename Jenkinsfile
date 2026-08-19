@@ -3,6 +3,10 @@ pipeline {
         label 'ubuntu-qap'
     }
 
+    triggers {
+        pollSCM('H/2 * * * *')
+    }
+
     options {
         skipDefaultCheckout(true)
         disableConcurrentBuilds()
@@ -14,6 +18,8 @@ pipeline {
                 artifactNumToKeepStr: '5'
             )
         )
+
+        copyArtifactPermission('testFlyBackEnd-deploy')
     }
 
     stages {
@@ -64,10 +70,34 @@ pipeline {
             }
         }
 
+        stage('Create build metadata') {
+            steps {
+                sh '''
+                    set -eu
+
+                    ARTIFACT="$(find target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
+                    test -n "$ARTIFACT"
+
+                    {
+                        echo "SOURCE_JOB=$JOB_NAME"
+                        echo "SOURCE_BUILD_NUMBER=$BUILD_NUMBER"
+                        echo "SOURCE_BUILD_URL=$BUILD_URL"
+                        echo "GIT_COMMIT=$(git rev-parse HEAD)"
+                        echo "GIT_BRANCH=main"
+                        echo "ARTIFACT=$(basename "$ARTIFACT")"
+                        echo "SHA256=$(sha256sum "$ARTIFACT" | awk '{print $1}')"
+                        echo "BUILT_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+                    } > build-info.txt
+
+                    cat build-info.txt
+                '''
+            }
+        }
+
         stage('Archive artifact') {
             steps {
                 archiveArtifacts(
-                    artifacts: 'target/*.jar',
+                    artifacts: 'target/*.jar,build-info.txt',
                     fingerprint: true,
                     onlyIfSuccessful: true
                 )
@@ -77,15 +107,15 @@ pipeline {
 
     post {
         success {
-            echo 'CHECKOUT + BUILD + ARCHIVE: SUCCESS'
+            echo 'CI BUILD: SUCCESS'
         }
 
         failure {
-            echo 'PIPELINE: FAILED'
+            echo 'CI BUILD: FAILED'
         }
 
         aborted {
-            echo 'PIPELINE: ABORTED'
+            echo 'CI BUILD: ABORTED'
         }
     }
 }
