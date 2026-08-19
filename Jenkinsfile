@@ -46,19 +46,31 @@ pipeline {
         '''
 
         script {
-            String shortCommit = sh(
-                script: 'git rev-parse --short HEAD',
-                returnStdout: true
-            ).trim()
+    String shortCommit = sh(
+        script: 'git rev-parse --short HEAD',
+        returnStdout: true
+    ).trim()
 
-            String commitDescription = sh(
-                script: 'git log -1 --pretty="%an: %s"',
-                returnStdout: true
-            ).trim()
+    String commitMessage = sh(
+        script: 'git log -1 --pretty="%s"',
+        returnStdout: true
+    ).trim()
 
-            currentBuild.displayName = "#${env.BUILD_NUMBER} - ${shortCommit}"
-            currentBuild.description = commitDescription.take(120)
-        }
+    String commitAuthor = sh(
+        script: 'git log -1 --pretty="%an"',
+        returnStdout: true
+    ).trim()
+
+    String shortMessage = commitMessage
+        .replaceAll(/[\\r\\n]+/, ' ')
+        .take(60)
+
+    currentBuild.displayName =
+        "#${env.BUILD_NUMBER} - ${shortCommit} - ${shortMessage}"
+
+    currentBuild.description =
+        "${commitAuthor}: ${commitMessage}".take(120)
+}
     }
 }
 
