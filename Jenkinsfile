@@ -10,7 +10,7 @@ pipeline {
     options {
         skipDefaultCheckout(true)
         disableConcurrentBuilds()
-        timeout(time: 15, unit: 'MINUTES')
+        timeout(time: 30, unit: 'MINUTES')
 
         buildDiscarder(
             logRotator(
@@ -97,7 +97,43 @@ pipeline {
                 '''
             }
         }
+stage('Trivy vulnerability scan') {
+    steps {
+        sh '''
+            set -eu
 
+            mkdir -p trivy-reports
+
+            ARTIFACT="$(find target \
+                -maxdepth 1 \
+                -type f \
+                -name '*.jar' \
+                | head -n 1)"
+
+            test -n "$ARTIFACT"
+
+            echo "=== Trivy scan target ==="
+            echo "$ARTIFACT"
+
+            trivy fs \
+                --cache-dir /home/jenkins/agent/.trivy-cache \
+                --scanners vuln \
+                --offline-scan \
+                --disable-telemetry \
+                --skip-version-check \
+                --skip-vex-repo-update \
+                --parallel 1 \
+                --severity HIGH,CRITICAL \
+                --exit-code 0 \
+                --format table \
+                --output trivy-reports/vulnerability-report.txt \
+                "$ARTIFACT"
+
+            echo "=== Trivy report ==="
+            cat trivy-reports/vulnerability-report.txt
+        '''
+    }
+}
         stage('Create build metadata') {
             steps {
                 sh '''
@@ -125,7 +161,7 @@ pipeline {
         stage('Archive artifact') {
             steps {
                 archiveArtifacts(
-                    artifacts: 'target/*.jar,build-info.txt',
+                    artifacts: 'target/*.jar,build-info.txt,trivy-reports/*.txt',
                     fingerprint: true,
                     onlyIfSuccessful: true
                 )
