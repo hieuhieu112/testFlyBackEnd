@@ -31,21 +31,36 @@ pipeline {
         }
 
         stage('Inspect project') {
-            steps {
-                sh '''
-                    set -eu
+    steps {
+        sh '''
+            set -eu
 
-                    echo "=== Git information ==="
-                    git remote -v
-                    git rev-parse --short HEAD
-                    git log -1 --oneline
+            echo "=== Git information ==="
+            git remote -v
+            git rev-parse --short HEAD
+            git log -1 --oneline
 
-                    echo "=== Project information ==="
-                    test -f pom.xml
-                    grep -nE "java.version|spring-boot" pom.xml || true
-                '''
-            }
+            echo "=== Project information ==="
+            test -f pom.xml
+            grep -nE "java.version|spring-boot" pom.xml || true
+        '''
+
+        script {
+            String shortCommit = sh(
+                script: 'git rev-parse --short HEAD',
+                returnStdout: true
+            ).trim()
+
+            String commitDescription = sh(
+                script: 'git log -1 --pretty="%an: %s"',
+                returnStdout: true
+            ).trim()
+
+            currentBuild.displayName = "#${env.BUILD_NUMBER} - ${shortCommit}"
+            currentBuild.description = commitDescription.take(120)
         }
+    }
+}
 
         stage('Maven build') {
             steps {
