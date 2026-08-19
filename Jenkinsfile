@@ -104,16 +104,8 @@ stage('Trivy vulnerability scan') {
 
             mkdir -p trivy-reports
 
-            ARTIFACT="$(find target \
-                -maxdepth 1 \
-                -type f \
-                -name '*.jar' \
-                | head -n 1)"
-
+            ARTIFACT="$(find target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
             test -n "$ARTIFACT"
-
-            echo "=== Trivy scan target ==="
-            echo "$ARTIFACT"
 
             trivy fs \
                 --cache-dir /home/jenkins/agent/.trivy-cache \
@@ -121,16 +113,12 @@ stage('Trivy vulnerability scan') {
                 --offline-scan \
                 --disable-telemetry \
                 --skip-version-check \
-                --skip-vex-repo-update \
                 --parallel 1 \
-                --severity HIGH,CRITICAL \
+                --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
                 --exit-code 0 \
-                --format table \
-                --output trivy-reports/vulnerability-report.txt \
+                --format json \
+                --output trivy-reports/vulnerability-report.json \
                 "$ARTIFACT"
-
-            echo "=== Trivy report ==="
-            cat trivy-reports/vulnerability-report.txt
         '''
     }
 }
@@ -159,14 +147,14 @@ stage('Trivy vulnerability scan') {
         }
 
         stage('Archive artifact') {
-            steps {
-                archiveArtifacts(
-                    artifacts: 'target/*.jar,build-info.txt,trivy-reports/*.txt',
-                    fingerprint: true,
-                    onlyIfSuccessful: true
-                )
-            }
-        }
+    steps {
+        archiveArtifacts(
+            artifacts: 'target/*.jar,build-info.txt,trivy-reports/*',
+            fingerprint: true,
+            onlyIfSuccessful: true
+        )
+    }
+}
     }
 
     post {
