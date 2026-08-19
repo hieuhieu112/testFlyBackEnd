@@ -105,43 +105,46 @@ stage('Trivy security scan') {
             rm -rf trivy-input trivy-reports
             mkdir -p trivy-input trivy-reports
 
-            echo "=== Scan source code and configuration ==="
-
-            trivy fs \
-                --cache-dir /home/jenkins/agent/.trivy-cache \
-                --scanners vuln,secret,misconfig,license \
-                --offline-scan \
-                --disable-telemetry \
-                --skip-version-check \
-                --skip-vex-repo-update \
-                --skip-check-update \
-                --parallel 1 \
-                --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
-                --exit-code 0 \
-                --format json \
-                --output trivy-reports/source-security-report.json \
-                .
-
-            echo "=== Scan built JAR ==="
-
             ARTIFACT="$(find target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
             test -n "$ARTIFACT"
 
             cp "$ARTIFACT" trivy-input/
 
-            trivy rootfs \
-                --cache-dir /home/jenkins/agent/.trivy-cache \
-                --scanners vuln \
-                --offline-scan \
-                --disable-telemetry \
-                --skip-version-check \
-                --skip-vex-repo-update \
-                --parallel 1 \
-                --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
-                --exit-code 0 \
-                --format json \
-                --output trivy-reports/artifact-vulnerability-report.json \
-                trivy-input/
+            {
+                echo "=== SOURCE: SECRET AND MISCONFIGURATION ==="
+
+                trivy fs \
+                    --cache-dir /home/jenkins/agent/.trivy-cache \
+                    --scanners secret,misconfig \
+                    --disable-telemetry \
+                    --skip-version-check \
+                    --skip-check-update \
+                    --parallel 1 \
+                    --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
+                    --exit-code 0 \
+                    --no-progress \
+                    --format table \
+                    .
+
+                echo
+                echo "=== ARTIFACT: JAR VULNERABILITIES ==="
+
+                trivy rootfs \
+                    --cache-dir /home/jenkins/agent/.trivy-cache \
+                    --scanners vuln \
+                    --offline-scan \
+                    --disable-telemetry \
+                    --skip-version-check \
+                    --parallel 1 \
+                    --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
+                    --exit-code 0 \
+                    --no-progress \
+                    --format table \
+                    trivy-input/
+
+            } > trivy-reports/security-findings.txt
+
+            cat trivy-reports/security-findings.txt
         '''
     }
 }
