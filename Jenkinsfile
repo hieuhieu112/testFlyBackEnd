@@ -97,28 +97,51 @@ pipeline {
                 '''
             }
         }
-stage('Trivy vulnerability scan') {
+stage('Trivy security scan') {
     steps {
         sh '''
             set -eu
 
-            mkdir -p trivy-reports
+            rm -rf trivy-input trivy-reports
+            mkdir -p trivy-input trivy-reports
+
+            echo "=== Scan source code and configuration ==="
+
+            trivy fs \
+                --cache-dir /home/jenkins/agent/.trivy-cache \
+                --scanners vuln,secret,misconfig,license \
+                --offline-scan \
+                --disable-telemetry \
+                --skip-version-check \
+                --skip-vex-repo-update \
+                --skip-check-update \
+                --parallel 1 \
+                --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
+                --exit-code 0 \
+                --format json \
+                --output trivy-reports/source-security-report.json \
+                .
+
+            echo "=== Scan built JAR ==="
 
             ARTIFACT="$(find target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
             test -n "$ARTIFACT"
 
-            trivy fs \
+            cp "$ARTIFACT" trivy-input/
+
+            trivy rootfs \
                 --cache-dir /home/jenkins/agent/.trivy-cache \
                 --scanners vuln \
                 --offline-scan \
                 --disable-telemetry \
                 --skip-version-check \
+                --skip-vex-repo-update \
                 --parallel 1 \
                 --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
                 --exit-code 0 \
                 --format json \
-                --output trivy-reports/vulnerability-report.json \
-                "$ARTIFACT"
+                --output trivy-reports/artifact-vulnerability-report.json \
+                trivy-input/
         '''
     }
 }
