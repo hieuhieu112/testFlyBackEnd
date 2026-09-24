@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+file:
+  upload-dir: /opt/app/upload-testflyway/
+
+app:
+  frontend-url: ${FRONTEND_URL:http://157.66.218.223/}
+  cookie:
+    secure: true
+    same-site: Lax
+
+logging:
+  level:
+    org.springframework.web: DEBUG

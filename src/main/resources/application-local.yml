@@ -4,6 +4,7 @@ spring:
     username: postgres
     password: hieu
     driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -12,11 +13,12 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
-server:
-  port: 8080
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:31004}
 
-  flyway:
-    enabled: true
-    validate-on-migrate: true
-    baseline-on-migrate: true
-    baseline-version: 0
+file:
+  upload-dir: D:/upload-testflyway/
+
+logging:
+  level:
+    org.springframework.web: DEBUG
