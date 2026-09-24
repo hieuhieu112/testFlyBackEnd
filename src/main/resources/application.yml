@@ -1,9 +1,19 @@
 spring:
-  application:
-    name: flyway
-  profiles:
-    default: local
-
+  datasource:
+    url: jdbc:postgresql://localhost:5432/demo_flyway
+    username: postgres
+    password: hieu
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:31004/}
 server:
   port: 8099
 
