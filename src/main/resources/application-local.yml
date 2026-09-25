@@ -1,9 +1,9 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/demo_flyway
-    username: postgres
-    password: hieu
-    driver-class-name: org.postgresql.Driver
+#  datasource:
+#    url: jdbc:postgresql://host.docker.internal:5432/demo_flyway
+#    username: postgres
+#    password: hieu
+#    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:

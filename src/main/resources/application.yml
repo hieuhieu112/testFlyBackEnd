@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/demo_flyway
+    url: ${DB_URL:jdbc:postgresql://host.docker.internal:5432/demo_flyway}
     username: postgres
     password: hieu
     driver-class-name: org.postgresql.Driver
@@ -14,6 +14,11 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   frontend:
     url: ${FRONTEND_URL:http://localhost:31004/}
+
+  profiles:
+    default: local
+
+
 server:
   port: 8099
 
